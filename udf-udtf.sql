@@ -37,16 +37,16 @@ ORDER BY
     REGION,
     PRODUCT_ID;
 
--- Create or replace a UDTF that calculates average cost per unit of a product for each sale record using SQL UDTF
+-- Create or replace a UDTF that calculates average price per unit of a product for each sale record using SQL UDTF
 -- SQL UDTFs are generally more efficient
-CREATE OR REPLACE FUNCTION AvgCostPerUnitProductPerSale()
+CREATE OR REPLACE FUNCTION AvgPricePerUnitProductPerSale()
     RETURNS TABLE (
         date DATE,
         region VARCHAR,
         product_id NUMBER,
         units_sold NUMBER,
         sales_amount NUMBER(38,2),
-        avg_cost_per_unit NUMBER(38,8)
+        avg_price_per_unit NUMBER(38,8)
     )
     LANGUAGE SQL
 AS $$
@@ -56,32 +56,32 @@ AS $$
         PRODUCT_ID,
         UNITS_SOLD,
         SALES_AMOUNT,
-        SALES_AMOUNT / UNITS_SOLD AS avg_cost_per_unit
+        SALES_AMOUNT / UNITS_SOLD AS avg_price_per_unit
     FROM SALES
     WHERE UNITS_SOLD > 0
 $$;
 
 -- Show the created SQL UDTF
-SHOW FUNCTIONS LIKE 'AvgCostPerUnitProductPerSale';
+SHOW FUNCTIONS LIKE 'AvgPricePerUnitProductPerSale';
 
--- Call the UDTF to see average cost per unit of a product for each sale record
-SELECT * FROM TABLE(AvgCostPerUnitProductPerSale()) ORDER BY PRODUCT_ID, REGION;
+-- Call the UDTF to see average price per unit of a product for each sale record
+SELECT * FROM TABLE(AvgPricePerUnitProductPerSale()) ORDER BY PRODUCT_ID, REGION;
 
--- Using the UDF and the UDTF, create a view with the average cost per unit of a product for each sale record rounded to whole number
-CREATE OR REPLACE VIEW avg_cost_per_unit_product_per_sale AS
+-- Using the UDF and the UDTF, create a view with the average price per unit of a product for each sale record rounded to whole number
+CREATE OR REPLACE VIEW avg_price_per_unit_product_per_sale AS
 SELECT 
     PRODUCT_ID,
     REGION,
-    RoundToWhole(avg_cost_per_unit) AS rounded_avg_cost_per_unit
-FROM TABLE(AvgCostPerUnitProductPerSale());
+    RoundToWhole(avg_price_per_unit) AS rounded_avg_price_per_unit
+FROM TABLE(AvgPricePerUnitProductPerSale());
 
--- Creates a new table PRODUCTS_WITH_AVG_PRICE that enriches the PRODUCTS table with the average of the rounded average costs from the avg_cost_per_unit_product_per_sale view.
+-- Creates a new table PRODUCTS_WITH_AVG_PRICE that enriches the PRODUCTS table with the average of the rounded average prices from the avg_price_per_unit_product_per_sale view.
 CREATE OR REPLACE TABLE PRODUCTS_WITH_AVG_PRICE AS
 SELECT 
     p.*,
-    ROUND(COALESCE(AVG(a.rounded_avg_cost_per_unit), 2), 2) AS avg_cost
+    ROUND(COALESCE(AVG(a.rounded_avg_price_per_unit), 2), 2) AS avg_price
 FROM PRODUCTS p
-LEFT JOIN avg_cost_per_unit_product_per_sale a ON p.PRODUCT_ID = a.PRODUCT_ID
+LEFT JOIN avg_price_per_unit_product_per_sale a ON p.PRODUCT_ID = a.PRODUCT_ID
 GROUP BY p.PRODUCT_ID, p.PRODUCT_NAME, p.CATEGORY;
 
 -- Completion Message
