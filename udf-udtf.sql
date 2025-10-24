@@ -65,7 +65,7 @@ $$;
 SHOW FUNCTIONS LIKE 'AvgCostPerUnitProductPerSale';
 
 -- Call the UDTF to see average cost per unit of a product for each sale record
-SELECT * FROM TABLE(AvgCostPerUnitProductPerSale());
+SELECT * FROM TABLE(AvgCostPerUnitProductPerSale()) ORDER BY PRODUCT_ID, REGION;
 
 -- Using the UDF and the UDTF, create a view with the average cost per unit of a product for each sale record rounded to whole number
 CREATE OR REPLACE VIEW avg_cost_per_unit_product_per_sale AS
