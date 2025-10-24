@@ -76,3 +76,6 @@ SELECT
     COALESCE(a.estimated_cost, 0) AS estimated_cost
 FROM PRODUCTS p
 LEFT JOIN avg_sales_by_product a ON p.PRODUCT_ID = a.PRODUCT_ID;
+
+-- Completetion Message
+SELECT 'UDF and UDTF creation and usage completed successfully!' AS status;
