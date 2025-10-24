@@ -43,18 +43,18 @@ CREATE OR REPLACE FUNCTION RoundToWhole(value FLOAT)
 A SQL-based table function that calculates the average sales amount per unit sold.
 
 ```sql
-CREATE OR REPLACE FUNCTION AvgSalesPerUnit()
+CREATE OR REPLACE FUNCTION AvgCostPerUnitProductPerSale()
     RETURNS TABLE (...)
     LANGUAGE SQL
 ```
 
-**Use Case**: Analyzing pricing efficiency and calculating estimated product costs.
+**Use Case**: Analyzing pricing of each unit of a product for each sale.
 
 ### 3. Combined Example
 The workshop demonstrates how to combine both functions to:
-- Create a view with estimated product costs
+- Create a view with rounded avg cost per product per sale
 - Join the results with a products table
-- Generate a comprehensive pricing analysis table
+- Generate a comprehensive avg pricing from all sales table
 
 ## 🎓 How to Use
 

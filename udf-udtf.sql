@@ -25,23 +25,28 @@ SELECT * FROM SALES;
 
 -- Display the Sales table with rounded sales amounts using the RoundToWhole UDF
 SELECT 
-    PRODUCT_ID,
     DATE,
     REGION,
+    PRODUCT_ID,
     UNITS_SOLD,
     RoundToWhole(SALES_AMOUNT) AS rounded_sales_amount
-FROM SALES;
+FROM SALES
+ORDER BY 
+    DATE,
+    CASE WHEN UPPER(REGION) = 'NORTH' THEN 0 ELSE 1 END,
+    REGION,
+    PRODUCT_ID;
 
--- Create or replace a UDTF that calculates average sales per unit using SQL UDTF
+-- Create or replace a UDTF that calculates average cost per unit of a product for each sale record using SQL UDTF
 -- SQL UDTFs are generally more efficient
-CREATE OR REPLACE FUNCTION AvgSalesPerUnit()
+CREATE OR REPLACE FUNCTION AvgCostPerUnitProductPerSale()
     RETURNS TABLE (
         date DATE,
         region VARCHAR,
         product_id NUMBER,
         units_sold NUMBER,
         sales_amount NUMBER(38,2),
-        avg_sales_per_unit NUMBER(38,8)
+        avg_cost_per_unit NUMBER(38,8)
     )
     LANGUAGE SQL
 AS $$
@@ -51,31 +56,33 @@ AS $$
         PRODUCT_ID,
         UNITS_SOLD,
         SALES_AMOUNT,
-        SALES_AMOUNT / UNITS_SOLD AS avg_sales_per_unit
+        SALES_AMOUNT / UNITS_SOLD AS avg_cost_per_unit
     FROM SALES
     WHERE UNITS_SOLD > 0
 $$;
 
 -- Show the created SQL UDTF
-SHOW FUNCTIONS LIKE 'AvgSalesPerUnit';
+SHOW FUNCTIONS LIKE 'AvgCostPerUnitProductPerSale';
 
--- Call the UDTF to see average sales per unit (aka the estimated cost as its sales amount divided by units sold for each product)
-SELECT * FROM TABLE(AvgSalesPerUnit());
+-- Call the UDTF to see average cost per unit of a product for each sale record
+SELECT * FROM TABLE(AvgCostPerUnitProductPerSale());
 
--- Using the UDF and the UDTF, create a view with estimated costs per product
-CREATE OR REPLACE VIEW avg_sales_by_product AS
+-- Using the UDF and the UDTF, create a view with the average cost per unit of a product for each sale record rounded to whole number
+CREATE OR REPLACE VIEW avg_cost_per_unit_product_per_sale AS
 SELECT 
     PRODUCT_ID,
-    RoundToWhole(avg_sales_per_unit) AS estimated_cost
-FROM TABLE(AvgSalesPerUnit());
+    REGION,
+    RoundToWhole(avg_cost_per_unit) AS rounded_avg_cost_per_unit
+FROM TABLE(AvgCostPerUnitProductPerSale());
 
--- Creates a new table PRODUCTS_WITH_EST_PRICE that joins the PRODUCTS table with the estimated costs from the view
-CREATE OR REPLACE TABLE PRODUCTS_WITH_EST_PRICE AS
+-- Creates a new table PRODUCTS_WITH_AVG_PRICE that enriches the PRODUCTS table with the average of the rounded average costs from the avg_cost_per_unit_product_per_sale view.
+CREATE OR REPLACE TABLE PRODUCTS_WITH_AVG_PRICE AS
 SELECT 
     p.*,
-    COALESCE(a.estimated_cost, 0) AS estimated_cost
+    ROUND(COALESCE(AVG(a.rounded_avg_cost_per_unit), 2), 2) AS avg_cost
 FROM PRODUCTS p
-LEFT JOIN avg_sales_by_product a ON p.PRODUCT_ID = a.PRODUCT_ID;
+LEFT JOIN avg_cost_per_unit_product_per_sale a ON p.PRODUCT_ID = a.PRODUCT_ID
+GROUP BY p.PRODUCT_ID, p.PRODUCT_NAME, p.CATEGORY;
 
--- Completetion Message
+-- Completion Message
 SELECT 'UDF and UDTF creation and usage completed successfully!' AS status;
