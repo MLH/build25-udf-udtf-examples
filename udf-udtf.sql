@@ -1,6 +1,11 @@
 -- UDF and UDTF Example in Snowflake SQL
 -- This script was created for workshops in relation to Snowflake's Season of Build 2025.
 
+-- Set the role, database, and schema context
+USE ROLE SNOWFLAKE_INTELLIGENCE_ADMIN;
+USE DATABASE DASH_DB_SI;
+USE SCHEMA RETAIL;
+
 -- Display all existing functions
 SHOW FUNCTIONS;
 
